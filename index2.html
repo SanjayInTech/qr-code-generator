@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Production QR Code Generator</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    label, select, input, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    canvas {
+      display: block;
+      margin: 20px auto;
+    }
+    #downloadBtn, #printBtn {
+      margin-top: 10px;
+      display: inline-block;
+      width: 48%;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>Production QR Code Generator</h2>
+
+  <label>Supplier:
+    <input type="text" id="supplier" placeholder="Enter supplier name" required />
+  </label>
+
+  <label>Brand:
+    <select id="brand" required>
+      <option value="" disabled selected hidden>Loading...</option>
+    </select>
+  </label>
+
+  <label>Type:
+    <select id="type" required>
+      <option value="" disabled selected hidden>Loading...</option>
+    </select>
+  </label>
+
+  <label>Size:
+    <input type="number" id="size" placeholder="Enter size (20 - 220)" min="20" max="220" required />
+  </label>
+
+  <label>Supplier Type:
+    <select id="supplierType" required>
+      <option value="" disabled selected hidden>Loading...</option>
+    </select>
+  </label>
+
+  <label>Inward Type:
+    <select id="inwardType" required>
+      <option value="" disabled selected hidden>Loading...</option>
+    </select>
+  </label>
+
+  <button onclick="generateProductionQR()">Generate Production QR</button>
+  <canvas id="productionQR"></canvas>
+  <button id="downloadBtn" onclick="downloadQR()">Download</button>
+  <button id="printBtn" onclick="printQR()">Print</button>
+</div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbyRw403l5wY4YOEcgIngDUmEikfgHQ_bvRD0gNvVv9Scro1OP71Ieqsl6Uq8u9NJj6nEg/exec";
+
+window.onload = () => {
+  fetch(SHEET_URL)
+    .then(response => response.json())
+    .then(data => {
+      populateDropdown('brand', data.brands);
+      populateDropdown('type', data.types);
+      populateDropdown('supplierType', data.supplierTypes);
+      populateDropdown('inwardType', data.inwardTypes);
+    })
+    .catch(error => console.error('Error fetching data:', error));
+};
+
+function populateDropdown(id, options) {
+  const select = document.getElementById(id);
+  select.innerHTML = `<option value="" disabled selected hidden>Select ${id.charAt(0).toUpperCase() + id.slice(1)}</option>`;
+  options.forEach(option => {
+    const opt = document.createElement('option');
+    opt.value = option;
+    opt.textContent = option;
+    select.appendChild(opt);
+  });
+}
+
+function generateProductionQR() {
+  const supplier = document.getElementById('supplier').value.trim();
+  const brand = document.getElementById('brand').value.trim();
+  const type = document.getElementById('type').value.trim();
+  const size = document.getElementById('size').value.trim();
+  const supplierType = document.getElementById('supplierType').value.trim();
+  const inwardType = document.getElementById('inwardType').value.trim();
+
+  if (!supplier || !brand || !type || !size || !supplierType || !inwardType) {
+    alert("Please fill all fields.");
+    return;
+  }
+
+  const now = new Date();
+  const timeStamp = now.getFullYear().toString()
+                   + String(now.getMonth()+1).padStart(2,'0')
+                   + String(now.getDate()).padStart(2,'0')
+                   + String(now.getHours()).padStart(2,'0')
+                   + String(now.getMinutes()).padStart(2,'0');
+
+  const id = supplier.substring(0,2).toUpperCase()
+           + brand.substring(0,2).toUpperCase()
+           + type.toUpperCase()
+           + supplierType.substring(0,2).toUpperCase()
+           + inwardType.substring(0,2).toUpperCase()
+           + timeStamp;
+
+  const canvas = document.getElementById('productionQR');
+  QRCode.toCanvas(canvas, id, function (error) {
+    if (error) console.error(error);
+  });
+}
+
+function downloadQR() {
+  const canvas = document.getElementById('productionQR');
+  const link = document.createElement('a');
+  link.download = 'production_qr.png';
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+function printQR() {
+  const canvas = document.getElementById('productionQR');
+  const dataUrl = canvas.toDataURL();
+  const win = window.open('', '_blank');
+  win.document.write(`<img src="${dataUrl}" onload="window.print(); window.close();" />`);
+  win.document.close();
+}
+</script>
+</body>
+</html>
