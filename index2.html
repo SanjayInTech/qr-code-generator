@@ -7,8 +7,7 @@
 function generateRackQR() {
   const data = {
     Place: document.getElementById('place').value,
-    Storage: document.getElementById('storage').value,
-    Side: document.getElementById('side').value,
+    StorageSide: document.getElementById('storageSide').value,
     Rack: document.getElementById('rack').value,
     Level: document.getElementById('level').value,
     Segment: document.getElementById('segment').value
@@ -133,19 +132,13 @@ function generateProductionQR() {
       <option>Warehouse</option>
     </select>
   </label>
-  <label>Storage:
-    <select id="storage">
-      <option value="" disabled selected hidden>Select Storage</option>
-      <option>Bag</option>
+  <label>area:
+    <select id="storageSide">
+      <option value="" disabled selected hidden>Select Storage + Side</option>
       <option>RBF</option>
       <option>LBF</option>
-    </select>
-  </label>
-  <label>Side:
-    <select id="side">
-      <option value="" disabled selected hidden>Select Side</option>
-      <option>L</option>
-      <option>R</option>
+      <option>RKT</option>
+      <option>RKL</option>
     </select>
   </label>
   <label>Rack:
@@ -223,7 +216,11 @@ window.onload = () => {
     .then(response => response.json())
     .then(data => {
       console.log("Fetched data:", data);
-      if (!data || !data.supplierMap) throw new Error("supplierMap is missing");
+      if (!data || typeof data !== 'object' || !('supplierMap' in data)) {
+        console.error("❌ Invalid data structure received:", data);
+        alert("Error: 'supplierMap' missing in response. Check Apps Script response.");
+        return;
+      }
 
       const supplierDropdown = document.getElementById('supplier');
       const suppliers = Object.keys(data.supplierMap);
