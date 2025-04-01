@@ -2,7 +2,9 @@
 <html>
 <head>
   <title>QR Code Generator</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js">function generateRackQR() {
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+function generateRackQR() {
   const data = {
     Place: document.getElementById('place').value,
     Storage: document.getElementById('storage').value,
@@ -33,6 +35,7 @@ function printQR(canvasId) {
   win.document.write(`<img src="${dataUrl}" onload="window.print(); window.close();" />`);
   win.document.close();
 }
+
 function generateProductionQR() {
   const supplier = document.getElementById('supplier').value.trim();
   const brand = document.getElementById('brand').value.trim();
@@ -174,7 +177,9 @@ function generateProductionQR() {
 <div class="container" id="production-section">
   <h2>Production QR Code Generator</h2>
   <label>Supplier:
-    <input type="text" id="supplier" placeholder="Enter supplier name" required />
+    <select id="supplier" required>
+      <option value="" disabled selected hidden>Loading...</option>
+    </select>
   </label>
   <label>Brand:
     <select id="brand" required>
@@ -208,18 +213,30 @@ function generateProductionQR() {
 </div>
 
 <script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbyRw403l5wY4YOEcgIngDUmEikfgHQ_bvRD0gNvVv9Scro1OP71Ieqsl6Uq8u9NJj6nEg/exec";
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbxZ6eUvVZlnTiv3idLgmpKp6SUyNMVRuJZYT3gXGv2rP-NK0eBwqvzC8TCTS7csb1SJCA/exec";
 
 window.onload = () => {
   document.getElementById("rack-section").style.display = "none";
   document.getElementById("production-section").style.display = "none";
+
   fetch(SHEET_URL)
     .then(response => response.json())
     .then(data => {
-      populateDropdown('brand', data.brands);
-      populateDropdown('type', data.types);
-      populateDropdown('supplierType', data.supplierTypes);
-      populateDropdown('inwardType', data.inwardTypes);
+      console.log("Fetched data:", data);
+      if (!data || !data.supplierMap) throw new Error("supplierMap is missing");
+
+      const supplierDropdown = document.getElementById('supplier');
+      const suppliers = Object.keys(data.supplierMap);
+      populateDropdown('supplier', suppliers);
+
+      supplierDropdown.addEventListener('change', () => {
+        const selected = supplierDropdown.value;
+        populateDropdown('brand', data.supplierMap[selected]?.brands || []);
+      });
+
+      populateDropdown('type', data.types || []);
+      populateDropdown('supplierType', data.supplierTypes || []);
+      populateDropdown('inwardType', data.inwardTypes || []);
     })
     .catch(error => console.error('Error fetching data:', error));
 };
