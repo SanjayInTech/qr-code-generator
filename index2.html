@@ -127,7 +127,18 @@
       });
     }
 
-    window.onload = () => {
+    function stopQRScanner() {
+  if (html5QrCodeInstance) {
+    html5QrCodeInstance.stop()
+      .then(() => {
+        document.getElementById("qr-reader").innerHTML = "<p style='text-align:center;'>🛑 Scanner stopped</p>";
+        console.log("QR scanner stopped.");
+      })
+      .catch(err => console.error("Error stopping scanner:", err));
+  }
+}
+
+window.onload = () => {
       document.getElementById("rack-section").style.display = "none";
       document.getElementById("production-section").style.display = "none";
       document.getElementById("inward-section").style.display = "none";
