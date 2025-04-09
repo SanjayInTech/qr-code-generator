@@ -3,71 +3,229 @@
 <head>
   <title>QR Code Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<script>
-function generateRackQR() {
-  const data = {
-    Place: document.getElementById('place').value,
-    StorageSide: document.getElementById('storageSide').value,
-    Rack: document.getElementById('rack').value,
-    Level: document.getElementById('level').value,
-    Segment: document.getElementById('segment').value
-  };
-  const jsonData = JSON.stringify(data);
-  const canvas = document.getElementById('rackQR');
-  QRCode.toCanvas(canvas, jsonData, function (error) {
-    if (error) console.error(error);
-  });
-}
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <script>
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbwn2CCcLVL6qLuhDY1gHYUHi6JeJYafqa7xZYiFjrp8yrgscwpW7GmTNObSASkQWlrO/exec";
 
-function downloadQR(canvasId) {
-  const canvas = document.getElementById(canvasId);
-  const link = document.createElement('a');
-  link.download = `${canvasId}.png`;
-  link.href = canvas.toDataURL();
-  link.click();
-}
+    function generateRackQR() {
+      const data = {
+        Place: document.getElementById('place').value,
+        StorageSide: document.getElementById('storageSide').value,
+        Rack: document.getElementById('rack').value,
+        Level: document.getElementById('level').value,
+        Segment: document.getElementById('segment').value
+      };
+      const jsonData = JSON.stringify(data);
+      const canvas = document.getElementById('rackQR');
+      QRCode.toCanvas(canvas, jsonData, function (error) {
+        if (error) console.error(error);
+      });
+    }
 
-function printQR(canvasId) {
-  const canvas = document.getElementById(canvasId);
-  const dataUrl = canvas.toDataURL();
-  const win = window.open('', '_blank');
-  win.document.write(`<img src="${dataUrl}" onload="window.print(); window.close();" />`);
-  win.document.close();
-}
+    function downloadQR(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      const link = document.createElement('a');
+      link.download = `${canvasId}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    }
 
-function generateProductionQR() {
-  const supplier = document.getElementById('supplier').value.trim();
-  const brand = document.getElementById('brand').value.trim();
-  const type = document.getElementById('type').value.trim();
-  const size = document.getElementById('size').value.trim();
-  const supplierType = document.getElementById('supplierType').value.trim();
-  const inwardType = document.getElementById('inwardType').value.trim();
+    function printQR(canvasId) {
+      const canvas = document.getElementById(canvasId);
+      const dataUrl = canvas.toDataURL();
+      const win = window.open('', '_blank');
+      win.document.write(`<img src="${dataUrl}" onload="window.print(); window.close();" />`);
+      win.document.close();
+    }
 
-  if (!supplier || !brand || !type || !size || !supplierType || !inwardType) {
-    alert("Please fill all fields.");
-    return;
-  }
+    function generateProductionQR() {
+      const supplier = document.getElementById('supplier').value.trim();
+      const brand = document.getElementById('brand').value.trim();
+      const type = document.getElementById('type').value.trim();
+      const size = document.getElementById('size').value.trim();
+      const supplierType = document.getElementById('supplierType').value.trim();
+      const inwardType = document.getElementById('inwardType').value.trim();
 
-  const now = new Date();
-  const timeStamp = now.getFullYear().toString()
-                   + String(now.getMonth()+1).padStart(2,'0')
-                   + String(now.getDate()).padStart(2,'0')
-                   + String(now.getHours()).padStart(2,'0')
-                   + String(now.getMinutes()).padStart(2,'0');
+      if (!supplier || !brand || !type || !size || !supplierType || !inwardType) {
+        alert("⚠️ Please fill all fields before generating QR.");
+        return;
+      }
 
-  const id = supplier.substring(0,2).toUpperCase()
-           + brand.substring(0,2).toUpperCase()
-           + type.toUpperCase()
-           + supplierType.substring(0,2).toUpperCase()
-           + inwardType.substring(0,2).toUpperCase()
-           + timeStamp;
+      const now = new Date();
+      const timeStamp = now.getFullYear().toString()
+                       + String(now.getMonth()+1).padStart(2, '0')
+                       + String(now.getDate()).padStart(2, '0')
+                       + String(now.getHours()).padStart(2, '0')
+                       + String(now.getMinutes()).padStart(2, '0')
+                       + String(now.getSeconds()).padStart(2, '0');
 
-  const canvas = document.getElementById('productionQR');
-  QRCode.toCanvas(canvas, id, function (error) {
-    if (error) console.error(error);
-  });
-}
-</script>
+      const id = supplier.substring(0, 2).toUpperCase()
+               + brand.substring(0, 2).toUpperCase()
+               + type.toUpperCase()
+               + supplierType.substring(0, 2).toUpperCase()
+               + inwardType.substring(0, 2).toUpperCase()
+               + timeStamp;
+
+      const canvas = document.getElementById('productionQR');
+      QRCode.toCanvas(canvas, id, function (error) {
+        if (error) {
+          console.error("❌ QR Code generation failed:", error);
+          alert("QR generation failed. Check console for details.");
+          return;
+        }
+      });
+
+      const params = new URLSearchParams({
+        mode: 'save',
+        id,
+        supplier,
+        brand,
+        type,
+        size,
+        supplierType,
+        inwardType
+      });
+
+      console.log("📤 Data being sent to Apps Script:", {
+        id,
+        supplier,
+        brand,
+        type,
+        size,
+        supplierType,
+        inwardType
+      });
+
+      console.log("🌐 Full GET URL:", `${SHEET_URL}?${params.toString()}`);
+
+      fetch(`${SHEET_URL}?${params.toString()}`)
+        .then(res => res.text())
+        .then(data => {
+          console.log("✅ Server Response:", data);
+          alert("✅ Data saved and QR generated!");
+        })
+        .catch(err => {
+          console.error("❌ Failed to send data to sheet:", err);
+          alert("❌ Failed to save data. Check your connection or script.");
+        });
+    }
+    
+    function handleQRScanInput(value) {
+      if (!value) return;
+
+      try {
+        const parsed = JSON.parse(value);
+        scannedRackData = parsed;
+        console.log("📦 Rack QR Scanned:", parsed);
+      } catch (e) {
+        scannedProductionID = value.trim();
+        console.log("🏷️ Production QR Scanned:", scannedProductionID);
+      }
+
+      if (scannedProductionID && scannedRackData) {
+        processInward(scannedProductionID, scannedRackData);
+        scannedProductionID = null;
+        scannedRackData = null;
+      }
+    }
+
+
+    function processInward(productionID, rackData) {
+      fetch(`${SHEET_URL}?mode=inward&id=${encodeURIComponent(productionID)}`)
+        .then(res => res.text())
+        .then(inwardRes => {
+          console.log("📥 Inward saved:", inwardRes);
+        });
+
+      const stockParams = new URLSearchParams({
+        mode: 'stock',
+        id: productionID,
+        ...rackData
+      });
+
+      fetch(`${SHEET_URL}?${stockParams.toString()}`)
+        .then(res => res.text())
+        .then(stockRes => {
+          console.log("📦 Stock saved:", stockRes);
+          alert("✅ Inward & Stock data saved!");
+        })
+        .catch(err => {
+          console.error("❌ Error saving stock:", err);
+          alert("❌ Failed to save stock data.");
+        });
+    }
+    window.onload = () => {
+      document.getElementById("rack-section").style.display = "none";
+      document.getElementById("production-section").style.display = "none";
+      document.getElementById("inward-section").style.display = "none";
+
+      fetch(`${SHEET_URL}?mode=fetch`)
+        .then(response => response.json())
+        .then(data => {
+          console.log("Fetched data:", data);
+          if (!data || typeof data !== 'object' || !('supplierMap' in data)) {
+            console.error("❌ Invalid data structure received:", data);
+            alert("Error: 'supplierMap' missing in response. Check Apps Script response.");
+            return;
+          }
+
+          const supplierDropdown = document.getElementById('supplier');
+          const suppliers = Object.keys(data.supplierMap);
+          populateDropdown('supplier', suppliers);
+
+          supplierDropdown.addEventListener('change', () => {
+            const selected = supplierDropdown.value;
+            populateDropdown('brand', data.supplierMap[selected]?.brands || []);
+          });
+
+          populateDropdown('type', data.types || []);
+          populateDropdown('supplierType', data.supplierTypes || []);
+          populateDropdown('inwardType', data.inwardTypes || []);
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
+
+    function switchTo(mode) {
+      document.getElementById("rack-section").style.display = "none";
+      document.getElementById("production-section").style.display = "none";
+      document.getElementById("inward-section").style.display = "none";
+      if (mode === "rack") document.getElementById("rack-section").style.display = "block";
+      if (mode === "production") document.getElementById("production-section").style.display = "block";
+      if (mode === "inward") document.getElementById("inward-section").style.display = "block";
+    }
+
+    function populateDropdown(id, options) {
+      const select = document.getElementById(id);
+      select.innerHTML = `<option value="" disabled selected hidden>Select ${id.charAt(0).toUpperCase() + id.slice(1)}</option>`;
+      options.forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option;
+        opt.textContent = option;
+        select.appendChild(opt);
+      });
+    }
+
+    function startQRScanner() {
+      const qrRegion = document.getElementById("qr-reader");
+      qrRegion.innerHTML = "";
+      const html5QrCode = new Html5Qrcode("qr-reader");
+      html5QrCode.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: 250
+        },
+        (decodedText, decodedResult) => {
+          console.log("🔍 QR Scanned:", decodedText);
+          handleQRScanInput(decodedText);
+        },
+        (errorMessage) => {
+          console.warn("QR Scan error:", errorMessage);
+        }
+      ).catch(err => console.error("Camera start error:", err));
+    }
+
+  </script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -116,12 +274,13 @@ function generateProductionQR() {
   </style>
 </head>
 <body>
+  <div id="button-selector">
+    <button onclick="switchTo('rack')">Rack QR</button>
+    <button onclick="switchTo('production')">Product QR</button>
+    <button onclick="switchTo('inward')">Inward</button>
+  </div>
 
-<div id="button-selector">
-  <button onclick="switchTo('rack')">Rack QR</button>
-  <button onclick="switchTo('production')">Product QR</button>
-</div>
-
+ 
 <div class="container" id="rack-section">
   <h2>Rack QR Code Generator</h2>
   <label>Place:
@@ -132,13 +291,13 @@ function generateProductionQR() {
       <option>Warehouse</option>
     </select>
   </label>
-  <label>area:
+  <label>Storage + Side:
     <select id="storageSide">
-      <option value="" disabled selected hidden>area</option>
+      <option value="" disabled selected hidden>Select Storage + Side</option>
       <option>RBF</option>
       <option>LBF</option>
-      <option>L - Rack</option>
-      <option>R - Rack</option>
+      <option>RKT</option>
+      <option>RKL</option>
     </select>
   </label>
   <label>Rack:
@@ -205,54 +364,11 @@ function generateProductionQR() {
   </div>
 </div>
 
-<script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbxZ6eUvVZlnTiv3idLgmpKp6SUyNMVRuJZYT3gXGv2rP-NK0eBwqvzC8TCTS7csb1SJCA/exec";
 
-window.onload = () => {
-  document.getElementById("rack-section").style.display = "none";
-  document.getElementById("production-section").style.display = "none";
-
-  fetch(SHEET_URL)
-    .then(response => response.json())
-    .then(data => {
-      console.log("Fetched data:", data);
-      if (!data || typeof data !== 'object' || !('supplierMap' in data)) {
-        console.error("❌ Invalid data structure received:", data);
-        alert("Error: 'supplierMap' missing in response. Check Apps Script response.");
-        return;
-      }
-
-      const supplierDropdown = document.getElementById('supplier');
-      const suppliers = Object.keys(data.supplierMap);
-      populateDropdown('supplier', suppliers);
-
-      supplierDropdown.addEventListener('change', () => {
-        const selected = supplierDropdown.value;
-        populateDropdown('brand', data.supplierMap[selected]?.brands || []);
-      });
-
-      populateDropdown('type', data.types || []);
-      populateDropdown('supplierType', data.supplierTypes || []);
-      populateDropdown('inwardType', data.inwardTypes || []);
-    })
-    .catch(error => console.error('Error fetching data:', error));
-};
-
-function switchTo(mode) {
-  document.getElementById("rack-section").style.display = mode === "rack" ? "block" : "none";
-  document.getElementById("production-section").style.display = mode === "production" ? "block" : "none";
-}
-
-function populateDropdown(id, options) {
-  const select = document.getElementById(id);
-  select.innerHTML = `<option value="" disabled selected hidden>Select ${id.charAt(0).toUpperCase() + id.slice(1)}</option>`;
-  options.forEach(option => {
-    const opt = document.createElement('option');
-    opt.value = option;
-    opt.textContent = option;
-    select.appendChild(opt);
-  });
-}
-</script>
+<div class="container" id="inward-section">
+  <h2>Inward Processing (Scan Production + Rack QR)</h2>
+  <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto;"></div>
+  <p><small>Scan 2 QR codes in any order. One for Production ID, one for Rack (JSON).</small></p>
+</div>
 </body>
 </html>
