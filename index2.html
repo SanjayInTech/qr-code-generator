@@ -3,7 +3,7 @@
 <head>
   <title>QR Code Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script>
     const SHEET_URL = "https://script.google.com/macros/s/AKfycbwzcIQg2EKoYhMO2FXykjPqMD0iTzqsiUqXLMvXix0z0AY9Us9NwTAsLnSXe5zp4PFiiw/exec";
 
@@ -100,17 +100,18 @@
       const qrRegion = document.getElementById("qr-reader");
       qrRegion.innerHTML = "<p style='text-align:center'>🎥 Starting camera...</p>";
       html5QrCodeInstance = new Html5Qrcode("qr-reader");
-      html5QrCodeInstance.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText, decodedResult) => {
-          console.log("🔍 QR Scanned:", decodedText);
-          handleQRScanInput(decodedText);
-        },
-        (errorMessage) => {
-          console.warn("QR Scan error:", errorMessage);
-        }
-      ).catch(err => {
+      setTimeout(() => {
+        html5QrCodeInstance.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          (decodedText, decodedResult) => {
+            console.log("🔍 QR Scanned:", decodedText);
+            handleQRScanInput(decodedText);
+          },
+          (errorMessage) => {
+            console.warn("QR Scan error:", errorMessage);
+          }
+        )
         qrRegion.innerHTML = `<p style='color:red; text-align:center;'>❌ Camera access failed: ${err}</p>`;
       });
     }
@@ -298,12 +299,18 @@
 
   <div class="container" id="inward-section">
     <h2>Inward Processing (Scan Production + Rack QR)</h2>
-    <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto;"></div>
+    
+    <div style="text-align:center; margin-top: 10px;">
+      <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
+    </div>
     <p><small>Scan 2 QR codes in any order. One for Production ID, one for Rack (JSON).</small></p>
   </div>
   <div class="container" id="outward-section">
-    <h2>Outward Processing (Scan Production QR)</h2>
-    <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto;"></div>
+  <h2>Outward Processing (Scan Production QR)</h2>
+  <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;"></div>
+  <div style="text-align:center; margin-top: 10px;">
+    <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
+  </div>
     <p><small>Scan the Production QR code to remove from stock and save in Outward.</small></p>
   </div>
 </body>
