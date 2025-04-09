@@ -14,6 +14,12 @@
     function handleQRScanInput(value) {
       if (!value) return;
 
+      // Detect outward mode
+      if (document.getElementById("outward-section")?.style.display === "block") {
+        processOutward(value.trim());
+        return;
+      }
+
       try {
         const parsed = JSON.parse(value);
         scannedRackData = parsed;
@@ -55,10 +61,24 @@
         });
     }
 
+    function processOutward(productionID) {
+      fetch(`${SHEET_URL}?mode=outward&id=${encodeURIComponent(productionID)}`)
+        .then(res => res.text())
+        .then(response => {
+          console.log("📤 Outward processed:", response);
+          alert("✅ Outward processed successfully!");
+        })
+        .catch(err => {
+          console.error("❌ Failed to process outward:", err);
+          alert("❌ Failed to process outward.");
+        });
+    }
+
     function switchTo(mode) {
       document.getElementById("rack-section").style.display = "none";
       document.getElementById("production-section").style.display = "none";
       document.getElementById("inward-section").style.display = "none";
+      document.getElementById("outward-section").style.display = "none";
 
       if (html5QrCodeInstance) {
         html5QrCodeInstance.stop().catch(e => console.warn("QR stop error:", e));
@@ -68,6 +88,10 @@
       if (mode === "production") document.getElementById("production-section").style.display = "block";
       if (mode === "inward") {
         document.getElementById("inward-section").style.display = "block";
+        startQRScanner();
+      }
+      if (mode === "outward") {
+        document.getElementById("outward-section").style.display = "block";
         startQRScanner();
       }
     }
@@ -106,6 +130,7 @@
       document.getElementById("rack-section").style.display = "none";
       document.getElementById("production-section").style.display = "none";
       document.getElementById("inward-section").style.display = "none";
+      document.getElementById("outward-section").style.display = "none";
 
       fetch(`${SHEET_URL}?mode=fetch`)
         .then(response => response.json())
@@ -185,9 +210,9 @@
     <button onclick="switchTo('rack')">Rack QR</button>
     <button onclick="switchTo('production')">Product QR</button>
     <button onclick="switchTo('inward')">Inward</button>
+    <button onclick="switchTo('outward')">Outward</button>
   </div>
-
-   
+     
 <div class="container" id="rack-section">
   <h2>Rack QR Code Generator</h2>
   <label>Place:
@@ -275,6 +300,11 @@
     <h2>Inward Processing (Scan Production + Rack QR)</h2>
     <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto;"></div>
     <p><small>Scan 2 QR codes in any order. One for Production ID, one for Rack (JSON).</small></p>
+  </div>
+  <div class="container" id="outward-section">
+    <h2>Outward Processing (Scan Production QR)</h2>
+    <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto;"></div>
+    <p><small>Scan the Production QR code to remove from stock and save in Outward.</small></p>
   </div>
 </body>
 </html>
