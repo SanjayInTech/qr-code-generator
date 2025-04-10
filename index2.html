@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>QR Code Generator</title>
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -169,6 +170,80 @@ window.onload = () => {
         })
         .catch(error => console.error('Error fetching data:', error));
     }
+
+    function generateProductionQR() {
+      const supplier = document.getElementById('supplier').value.trim();
+      const brand = document.getElementById('brand').value.trim();
+      const type = document.getElementById('type').value.trim();
+      const size = document.getElementById('size').value.trim();
+      const supplierType = document.getElementById('supplierType').value.trim();
+      const inwardType = document.getElementById('inwardType').value.trim();
+
+      if (!supplier || !brand || !type || !size || !supplierType || !inwardType) {
+        alert("⚠️ Please fill all fields before generating QR.");
+        return;
+      }
+
+      const now = new Date();
+      const timeStamp = now.getFullYear().toString()
+                       + String(now.getMonth()+1).padStart(2, '0')
+                       + String(now.getDate()).padStart(2, '0')
+                       + String(now.getHours()).padStart(2, '0')
+                       + String(now.getMinutes()).padStart(2, '0')
+                       + String(now.getSeconds()).padStart(2, '0');
+
+      const id = supplier.substring(0, 2).toUpperCase()
+               + brand.substring(0, 2).toUpperCase()
+               + type.toUpperCase()
+               + supplierType.substring(0, 2).toUpperCase()
+               + inwardType.substring(0, 2).toUpperCase()
+               + timeStamp;
+
+      const canvas = document.getElementById('productionQR');
+      QRCode.toCanvas(canvas, id, function (error) {
+        if (error) {
+          console.error("❌ QR Code generation failed:", error);
+          alert("QR generation failed. Check console for details.");
+        }
+      });
+
+      const params = new URLSearchParams({
+        mode: 'save',
+        id,
+        supplier,
+        brand,
+        type,
+        size,
+        supplierType,
+        inwardType
+      });
+
+      fetch(`${SHEET_URL}?${params.toString()}`)
+        .then(res => res.text())
+        .then(data => {
+          console.log("✅ Server Response:", data);
+          alert("✅ Data saved and QR generated!");
+        })
+        .catch(err => {
+          console.error("❌ Failed to send data to sheet:", err);
+          alert("❌ Failed to save data. Check your connection or script.");
+        });
+    }
+
+    function generateRackQR() {
+      const data = {
+        Place: document.getElementById('place').value,
+        StorageSide: document.getElementById('storageSide').value,
+        Rack: document.getElementById('rack').value,
+        Level: document.getElementById('level').value,
+        Segment: document.getElementById('segment').value
+      };
+      const jsonData = JSON.stringify(data);
+      const canvas = document.getElementById('rackQR');
+      QRCode.toCanvas(canvas, jsonData, function (error) {
+        if (error) console.error(error);
+      });
+    }
   </script>
   <style>
     body {
@@ -310,7 +385,7 @@ window.onload = () => {
 
   <div class="container" id="inward-section">
     <h2>Inward Processing (Scan Production + Rack QR)</h2>
-    
+    <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;"></div>
     <div style="text-align:center; margin-top: 10px;">
       <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
     </div>
