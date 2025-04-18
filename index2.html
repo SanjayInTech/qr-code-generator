@@ -6,7 +6,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script>
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxA3TB4xYnRinQOOcsTIPVR9Yf2rgTT1PhQZ_bAchzFQr9Ju_daCDM02skm9UeS3it7Bw/exec";
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbyWFI3n4igRBmz7agsRBOhyPlkyw_O1HWNyhYNUqxURiUQIfwyQobdOEvHdkpm2dlbv/exec";
 
     let scannedProductionID = null;
     let scannedRackData = null;
@@ -15,7 +15,6 @@
     function handleQRScanInput(value) {
       if (!value) return;
 
-      // Detect outward mode
       if (document.getElementById("outward-section")?.style.display === "block") {
         processOutward(value.trim());
         return;
@@ -36,7 +35,7 @@
         scannedRackData = null;
       }
     }
-
+   
     function processInward(productionID, rackData) {
       fetch(`${SHEET_URL}?mode=inward&id=${encodeURIComponent(productionID)}`)
         .then(res => res.text())
@@ -87,35 +86,35 @@
 
       if (mode === "rack") document.getElementById("rack-section").style.display = "block";
       if (mode === "production") document.getElementById("production-section").style.display = "block";
-      if (mode === "inward") {
-        document.getElementById("inward-section").style.display = "block";
-        startQRScanner();
+      const targetDiv = document.getElementById(`${mode}-section`);
+      if (targetDiv) {
+        targetDiv.style.display = "block";
+        if (mode === "inward") startQRScanner("qr-reader-inward");
+        else if (mode === "outward") startQRScanner("qr-reader-outward");
       }
-      if (mode === "outward") {
-        document.getElementById("outward-section").style.display = "block";
-        startQRScanner();
-      }
+
     }
 
-    function startQRScanner() {
-      const qrRegion = document.getElementById("qr-reader");
+    function startQRScanner(scannerId) {
+      const qrRegion = document.getElementById(scannerId);
       qrRegion.innerHTML = "<p style='text-align:center'>🎥 Starting camera...</p>";
-      html5QrCodeInstance = new Html5Qrcode("qr-reader");
-      setTimeout(() => {
-        html5QrCodeInstance.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
-          (decodedText, decodedResult) => {
-            console.log("🔍 QR Scanned:", decodedText);
-            handleQRScanInput(decodedText);
-          },
-          (errorMessage) => {
-            console.warn("QR Scan error:", errorMessage);
-          }
-        )
+      html5QrCodeInstance = new Html5Qrcode(scannerId);
+
+      html5QrCodeInstance.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText, decodedResult) => {
+          console.log("🔍 QR Scanned:", decodedText);
+          handleQRScanInput(decodedText);
+        },
+        (errorMessage) => {
+          console.warn("QR Scan error:", errorMessage);
+        }
+      ).catch(err => {
         qrRegion.innerHTML = `<p style='color:red; text-align:center;'>❌ Camera access failed: ${err}</p>`;
       });
     }
+
 
     function populateDropdown(id, options) {
       const select = document.getElementById(id);
@@ -200,7 +199,7 @@ window.onload = () => {
                + timeStamp;
 
       const canvas = document.getElementById('productionQR');
-      QRCode.toCanvas(canvas, id, function (error) {
+      QRCode.toCanvas(canvas, id, { width: 256, margin: 2 }, function (error) {
         if (error) {
           console.error("❌ QR Code generation failed:", error);
           alert("QR generation failed. Check console for details.");
@@ -383,21 +382,21 @@ window.onload = () => {
   </div>
 </div>
 
-  <div class="container" id="inward-section">
-    <h2>Inward Processing (Scan Production + Rack QR)</h2>
-    <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;"></div>
-    <div style="text-align:center; margin-top: 10px;">
-      <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
-    </div>
-    <p><small>Scan 2 QR codes in any order. One for Production ID, one for Rack (JSON).</small></p>
-  </div>
-  <div class="container" id="outward-section">
-  <h2>Outward Processing (Scan Production QR)</h2>
-  <div id="qr-reader" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;"></div>
+<div class="container" id="inward-section">
+  <h2>Inward Processing (Scan Production + Rack QR)</h2>
+  <div id="qr-reader-inward" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;"></div>
   <div style="text-align:center; margin-top: 10px;">
     <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
   </div>
-    <p><small>Scan the Production QR code to remove from stock and save in Outward.</small></p>
+  <p><small>Scan 2 QR codes in any order. One for Production ID, one for Rack (JSON).</small></p>
+</div>
+<div class="container" id="outward-section">
+  <h2>Outward Processing (Scan Production QR)</h2>
+  <div id="qr-reader-outward" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;"></div>
+  <div style="text-align:center; margin-top: 10px;">
+    <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
   </div>
+  <p><small>Scan the Production QR code to remove from stock and save in Outward.</small></p>
+</div>
 </body>
 </html>
