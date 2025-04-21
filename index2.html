@@ -74,6 +74,36 @@
         });
     }
 
+    function printQR(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return alert("❌ QR code not found!");
+
+  const dataUrl = canvas.toDataURL("image/png");
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.open();
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print QR</title>
+      </head>
+      <body style="text-align:center;">
+        <h3>QR Code</h3>
+        <img src="${dataUrl}" style="width:256px; height:256px;" />
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(function() { window.close(); }, 100);
+          };
+        <\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+
+
     function switchTo(mode) {
       document.getElementById("rack-section").style.display = "none";
       document.getElementById("production-section").style.display = "none";
