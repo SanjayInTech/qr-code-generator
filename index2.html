@@ -229,7 +229,8 @@ window.onload = () => {
                + timeStamp;
 
       const canvas = document.getElementById('productionQR');
-      QRCode.toCanvas(canvas, id, { width: 256, margin: 2 }, function (error) {
+     QRCode.toCanvas(canvas, id, { width: 256, margin: 2 }, function (error) {
+  canvas.dataset.id = id;
         if (error) {
           console.error("❌ QR Code generation failed:", error);
           alert("QR generation failed. Check console for details.");
@@ -273,6 +274,75 @@ window.onload = () => {
         if (error) console.error(error);
       });
     }
+
+   function printProductLabel() {
+  const supplier = document.getElementById('supplier').value.trim();
+  const brand = document.getElementById('brand').value.trim();
+  const type = document.getElementById('type').value.trim();
+  const size = document.getElementById('size').value.trim();
+  const supplierType = document.getElementById('supplierType').value.trim();
+  const inwardType = document.getElementById('inwardType').value.trim();
+
+  const qrCanvas = document.getElementById('productionQR');
+  const qrDataUrl = qrCanvas.toDataURL("image/png");
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString();
+  const lot = qrCanvas?.dataset?.id || 'N/A';
+
+  const labelContent = `
+    <html>
+    <head>
+      <title>Print Label</title>
+      <style>
+        @media print {
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+          }
+          .label {
+            width: 180mm;
+            height: 30mm;
+            padding: 3mm;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-sizing: border-box;
+          }
+          .qr {
+            width: 28mm;
+            height: 28mm;
+          }
+          .details {
+            flex-grow: 1;
+            text-align: left;
+            padding: 0 10mm;
+            font-size: 12pt;
+          }
+        }
+      </style>
+    </head>
+    <body onload="window.print(); setTimeout(() => window.close(), 300);">
+      <div class="label">
+        <img class="qr" src="${qrDataUrl}" />
+        <div class="details">
+          <div><strong>QRid:</strong> ${lot}</div>
+          <div>${supplier} | ${brand} | ${inwardType}</div>
+          <div><strong>Time:</strong> ${timeStr}</div>
+        </div>
+        <img class="qr" src="${qrDataUrl}" />
+      </div>
+    </body>
+    </html>
+  `;
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.open();
+  printWindow.document.write(labelContent);
+  printWindow.document.close();
+}
+
   </script>
   <style>
     body {
@@ -319,6 +389,29 @@ window.onload = () => {
       font-size: 16px;
       cursor: pointer;
     }
+
+     @media print {
+    body * {
+      visibility: hidden;
+    }
+    #label-print-area, #label-print-area * {
+      visibility: visible;
+    }
+    #label-print-area {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 180mm;
+      height: 30mm;
+      padding: 4mm;
+      font-size: 12px;
+      font-family: Arial, sans-serif;
+    }
+    #label-print-area canvas {
+      width: 28mm !important;
+      height: 28mm !important;
+    }
+  }
   </style>
 </head>
 <body>
@@ -406,10 +499,11 @@ window.onload = () => {
   </label>
   <button onclick="generateProductionQR()">Generate Production QR</button>
   <canvas id="productionQR"></canvas>
-  <div class="btn-pair">
-    <button onclick="downloadQR('productionQR')">Download</button>
-    <button onclick="printQR('productionQR')">Print</button>
-  </div>
+ <div class="btn-pair">
+  <button onclick="downloadQR('productionQR')">Download</button>
+  <button onclick="printProductLabel()">🖨️ Print Label</button>
+</div>
+
 </div>
 
 <div class="container" id="inward-section">
