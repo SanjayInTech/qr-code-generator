@@ -260,83 +260,22 @@ window.onload = () => {
         });
     }
     
-    function printProductionLabel() {
+ function printProductionLabel() {
   const canvas = document.getElementById("productionQR");
   if (!canvas) return alert("❌ QR code not found!");
+  const qrData = canvas.toDataURL("image/png");
 
-  const qrDataUrl = canvas.toDataURL("image/png");
+  const params = new URLSearchParams({
+    supplier: document.getElementById("supplier").value.trim(),
+    brand: document.getElementById("brand").value.trim(),
+    type: document.getElementById("type").value.trim(),
+    size: document.getElementById("size").value.trim(),
+    supplierType: document.getElementById("supplierType").value.trim(),
+    inwardType: document.getElementById("inwardType").value.trim(),
+    qr: qrData
+  });
 
-  const supplier = document.getElementById("supplier").value.trim();
-  const brand = document.getElementById("brand").value.trim();
-  const type = document.getElementById("type").value.trim();
-  const size = document.getElementById("size").value.trim();
-  const supplierType = document.getElementById("supplierType").value.trim();
-  const inwardType = document.getElementById("inwardType").value.trim();
-  const time = new Date().toLocaleTimeString();
-  const lot = `${supplier.substring(0, 2).toUpperCase()}${brand.substring(0, 2).toUpperCase()}${type.toUpperCase()}${supplierType.substring(0, 2).toUpperCase()}${inwardType.substring(0, 2).toUpperCase()}${new Date().getTime().toString().slice(-6)}`;
-
-  const htmlContent = `
-    <html>
-      <head>
-        <title>Print Label</title>
-        <style>
-          @media print {
-            body {
-              margin: 0;
-              padding: 0;
-            }
-            .label {
-              width: 180mm;
-              height: 30mm;
-              font-family: Arial, sans-serif;
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              padding: 4mm 8mm;
-              box-sizing: border-box;
-              font-size: 11pt;
-            }
-            .qrcode {
-              width: 60px;
-              height: 60px;
-            }
-            .details {
-              flex: 1;
-              text-align: left;
-              margin: 0 20px;
-            }
-            .details span {
-              display: block;
-              margin-bottom: 4px;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="label">
-          <img class="qrcode" src="${qrDataUrl}" />
-          <div class="details">
-            <span><strong>Lot:</strong> ${lot}</span>
-            <span><strong>MO:</strong> 002 <strong>P.Code:</strong> ${type}${size}</span>
-            <span>${supplier} | ${brand} | ${inwardType}</span>
-            <span><strong>Time:</strong> ${time}</span>
-          </div>
-          <img class="qrcode" src="${qrDataUrl}" />
-        </div>
-        <script>
-          window.onload = function() {
-            window.print();
-            setTimeout(() => window.close(), 300);
-          }
-        <\/script>
-      </body>
-    </html>
-  `;
-
-  const printWindow = window.open("", "_blank");
-  printWindow.document.open();
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
+  window.open(`print-label.html?${params.toString()}`, "_blank");
 }
 
 
@@ -513,7 +452,7 @@ window.onload = () => {
   <canvas id="productionQR"></canvas>
  <div class="btn-pair">
   <button onclick="downloadQR('productionQR')">Download</button>
-  <button onclick="printProductLabel()">🖨️ Print Label</button>
+  <button onclick="printProductionLabel()">🖨️ Print Label</button>
 </div>
 
 </div>
