@@ -263,21 +263,76 @@ window.onload = () => {
  function printProductionLabel() {
   const canvas = document.getElementById("productionQR");
   if (!canvas) return alert("❌ QR code not found!");
-  const qrData = canvas.toDataURL("image/png");
 
-  const params = new URLSearchParams({
-    supplier: document.getElementById("supplier").value.trim(),
-    brand: document.getElementById("brand").value.trim(),
-    type: document.getElementById("type").value.trim(),
-    size: document.getElementById("size").value.trim(),
-    supplierType: document.getElementById("supplierType").value.trim(),
-    inwardType: document.getElementById("inwardType").value.trim(),
-    qr: qrData
-  });
+  const qrDataUrl = canvas.toDataURL("image/png");
 
-  window.open(`print-label.html?${params.toString()}`, "_blank");
+  const supplier = document.getElementById("supplier").value.trim();
+  const brand = document.getElementById("brand").value.trim();
+  const type = document.getElementById("type").value.trim();
+  const size = document.getElementById("size").value.trim();
+  const supplierType = document.getElementById("supplierType").value.trim();
+  const inwardType = document.getElementById("inwardType").value.trim();
+  const time = new Date().toLocaleTimeString();
+  const lot = `${supplier.substring(0, 2).toUpperCase()}${brand.substring(0, 2).toUpperCase()}${type.toUpperCase()}${supplierType.substring(0, 2).toUpperCase()}${inwardType.substring(0, 2).toUpperCase()}${new Date().getTime().toString().slice(-6)}`;
+
+  const html = `
+    <html>
+    <head>
+      <style>
+        @media print {
+          body {
+            margin: 0;
+            padding: 0;
+          }
+        }
+        body {
+          font-family: Arial, sans-serif;
+          width: 180mm;
+          height: 30mm;
+          padding: 2mm 4mm;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 10pt;
+        }
+        .qrcode {
+          width: 60px;
+          height: 60px;
+        }
+        .text {
+          flex-grow: 1;
+          padding: 0 10px;
+        }
+        .text div {
+          margin-bottom: 2px;
+        }
+      </style>
+    </head>
+    <body>
+      <img class="qrcode" src="${qrDataUrl}" />
+      <div class="text">
+        <div><strong>Lot:</strong> ${lot}</div>
+        <div><strong>MO:</strong> 002 &nbsp; <strong>P.Code:</strong> ${type}${size}</div>
+        <div>${supplier} | ${brand} | ${inwardType}</div>
+        <div><strong>Time:</strong> ${time}</div>
+      </div>
+      <img class="qrcode" src="${qrDataUrl}" />
+      <script>
+        window.onload = () => {
+          window.print();
+          setTimeout(() => window.close(), 200);
+        };
+      <\/script>
+    </body>
+    </html>
+  `;
+
+  const printWindow = window.open("", "_blank");
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
 }
-
 
     function generateRackQR() {
       const data = {
@@ -473,5 +528,9 @@ window.onload = () => {
   </div>
   <p><small>Scan the Production QR code to remove from stock and save in Outward.</small></p>
 </div>
+
+<div id="label-print-area" style="display:none;"></div>
+
+
 </body>
 </html>
