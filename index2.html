@@ -379,23 +379,35 @@ function fetchQty() {
   }
 
   function submitOutward() {
-    const qrId = document.getElementById("qrIdInput").value.trim();
-    const outQty = document.getElementById("dispatchQty").value.trim();
-    if (!qrId || !outQty || outQty <= 0) {
-      alert("Enter valid dispatch qty.");
-      return;
-    }
+  const id = document.getElementById("scannedId").value.trim();
+  const qty = parseInt(document.getElementById("dispatchQty").value.trim(), 10);
 
-    fetch(`https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?mode=outward&id=${qrId}&qyt=${outQty}`)
-      .then(res => res.text())
-      .then(response => {
-        document.getElementById("dispatchStatus").innerText = response;
-        if (response.includes("✅")) {
-          document.getElementById("availableQty").innerText = parseInt(document.getElementById("availableQty").innerText) - outQty;
-          document.getElementById("dispatchQty").value = "";
-        }
-      });
+  if (!id) {
+    alert("❌ QR ID not found.");
+    return;
   }
+
+  if (isNaN(qty) || qty <= 0) {
+    alert("❌ Please enter a valid dispatch quantity.");
+    return;
+  }
+
+  const url = `https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?mode=outward&id=${encodeURIComponent(id)}&qty=${qty}`;
+
+  fetch(url)
+    .then(response => response.text())
+    .then(data => {
+      alert(data);
+      document.getElementById("scannedId").value = "";
+      document.getElementById("dispatchQty").value = "";
+      document.getElementById("outward-form").style.display = "none";
+    })
+    .catch(err => {
+      console.error("❌ Error:", err);
+      alert("❌ Failed to submit outward data.");
+    });
+}
+
 
   
   </script>
