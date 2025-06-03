@@ -64,20 +64,30 @@
         });
     }
 
-    function processOutward(productionID) {
-  // Show the outward form
+   function processOutward(productionID) {
+  // Stop the QR scanner
+  if (html5QrCodeInstance) {
+    html5QrCodeInstance.stop()
+      .then(() => {
+        console.log("🛑 QR Scanner stopped after scan.");
+        document.getElementById("qr-reader-outward").innerHTML = "<p style='text-align:center;'>✅ QR Scan complete. Awaiting dispatch quantity...</p>";
+      })
+      .catch(err => console.error("❌ Error stopping scanner:", err));
+  }
+
+  // Show the outward form and prefill scanned ID
   document.getElementById("scannedId").value = productionID;
   document.getElementById("dispatchQty").value = "";
   document.getElementById("outward-form").style.display = "block";
 
-  // Fetch available stock for this QR ID
+  // Fetch available qty
   fetch(`${SHEET_URL}?mode=stockQty&id=${encodeURIComponent(productionID)}`)
     .then(res => res.text())
     .then(qty => {
       if (qty.startsWith("❌")) {
         alert(qty);
       } else {
-        document.getElementById("availableQty")?.remove(); // clear if already exists
+        document.getElementById("availableQty")?.remove(); // remove old info
 
         const info = document.createElement("div");
         info.id = "availableQty";
