@@ -236,9 +236,9 @@ function generateProductionQR() {
   const size = document.getElementById('size').value.trim();
   const supplierType = document.getElementById('supplierType').value.trim();
   const inwardType = document.getElementById('inwardType').value.trim();
-  const qyt = document.getElementById('qyt').value.trim();  // ✅ Added
+  const qty = document.getElementById('qty').value.trim();  // ✅ Added
 
-  if (!supplier || !brand || !type || !size || !supplierType || !inwardType || !qyt) {
+  if (!supplier || !brand || !type || !size || !supplierType || !inwardType || !qty) {
     alert("⚠️ Please fill all fields including Quantity before generating QR.");
     return;
   }
@@ -276,7 +276,7 @@ function generateProductionQR() {
     size,
     supplierType,
     inwardType,
-    qyt  // ✅ Added here
+    qty  // ✅ Added here
   });
 
   fetch(`${SHEET_URL}?${params.toString()}`)
@@ -411,7 +411,7 @@ function submitOutward() {
   if (!id) return alert("❌ QR ID missing.");
   if (isNaN(qty) || qty <= 0) return alert("❌ Invalid quantity.");
 
-  const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qyt=${qty}`;
+  const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qty=${qty}`;
 
   fetch(url)
     .then(res => res.text())
@@ -584,8 +584,8 @@ function submitOutward() {
       <option value="" disabled selected hidden>Loading...</option>
     </select>
   </label>
-  <label>Quantity (Qyt):
-  <input type="number" id="qyt" placeholder="Enter quantity" min="1" required />
+  <label>Quantity (qty):
+  <input type="number" id="qty" placeholder="Enter quantity" min="1" required />
 </label>
 
 
