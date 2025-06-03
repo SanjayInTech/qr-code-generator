@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -6,7 +6,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script>
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxonjh5JXw2sn1fRQGmPcz0LdbLkGshXl_XenhKSKVAUR79GbwcQZA7BIKBMQIKWpeTTQ/exec";
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbwTjUr-SWXWFsBcgL32tQ9WXL2M0ofEqoT3-MnUulznkSn3Gn8wcAKLUhpsyOi8Wxvyag/exec";
 
     let scannedProductionID = null;
     let scannedRackData = null;
@@ -20,14 +20,17 @@
         return;
       }
 
-      try {
+            try {
         const parsed = JSON.parse(value);
         scannedRackData = parsed;
+        document.getElementById("scanned-rack-data").textContent = JSON.stringify(parsed, null, 2);
         console.log("📦 Rack QR Scanned:", parsed);
       } catch (e) {
         scannedProductionID = value.trim();
+        document.getElementById("scanned-production-id").textContent = scannedProductionID;
         console.log("🏷️ Production QR Scanned:", scannedProductionID);
       }
+
 
       if (scannedProductionID && scannedRackData) {
         processInward(scannedProductionID, scannedRackData);
@@ -200,140 +203,147 @@ window.onload = () => {
         .catch(error => console.error('Error fetching data:', error));
     }
 
-    function generateProductionQR() {
-      const supplier = document.getElementById('supplier').value.trim();
-      const brand = document.getElementById('brand').value.trim();
-      const type = document.getElementById('type').value.trim();
-      const size = document.getElementById('size').value.trim();
-      const supplierType = document.getElementById('supplierType').value.trim();
-      const inwardType = document.getElementById('inwardType').value.trim();
+function generateProductionQR() {
+  const supplier = document.getElementById('supplier').value.trim();
+  const brand = document.getElementById('brand').value.trim();
+  const type = document.getElementById('type').value.trim();
+  const size = document.getElementById('size').value.trim();
+  const supplierType = document.getElementById('supplierType').value.trim();
+  const inwardType = document.getElementById('inwardType').value.trim();
+  const qyt = document.getElementById('qyt').value.trim();  // ✅ Added
 
-      if (!supplier || !brand || !type || !size || !supplierType || !inwardType) {
-        alert("⚠️ Please fill all fields before generating QR.");
-        return;
-      }
+  if (!supplier || !brand || !type || !size || !supplierType || !inwardType || !qyt) {
+    alert("⚠️ Please fill all fields including Quantity before generating QR.");
+    return;
+  }
 
-      const now = new Date();
-      const timeStamp = now.getFullYear().toString()
-                       + String(now.getMonth()+1).padStart(2, '0')
-                       + String(now.getDate()).padStart(2, '0')
-                       + String(now.getHours()).padStart(2, '0')
-                       + String(now.getMinutes()).padStart(2, '0')
-                       + String(now.getSeconds()).padStart(2, '0');
+  const now = new Date();
+  const timeStamp = now.getFullYear().toString()
+                   + String(now.getMonth()+1).padStart(2, '0')
+                   + String(now.getDate()).padStart(2, '0')
+                   + String(now.getHours()).padStart(2, '0')
+                   + String(now.getMinutes()).padStart(2, '0')
+                   + String(now.getSeconds()).padStart(2, '0');
 
-      const id = supplier.substring(0, 2).toUpperCase()
-               + brand.substring(0, 2).toUpperCase()
-               + type.toUpperCase()
-               + supplierType.substring(0, 2).toUpperCase()
-               + inwardType.substring(0, 2).toUpperCase()
-               + timeStamp;
+  const id = supplier.substring(0, 2).toUpperCase()
+           + brand.substring(0, 2).toUpperCase()
+           + type.toUpperCase()
+           + supplierType.substring(0, 2).toUpperCase()
+           + inwardType.substring(0, 2).toUpperCase()
+           + timeStamp;
 
-      const canvas = document.getElementById('productionQR');
-     QRCode.toCanvas(canvas, id, { width: 256, margin: 2 }, function (error) {
-  canvas.dataset.id = id;
-        if (error) {
-          console.error("❌ QR Code generation failed:", error);
-          alert("QR generation failed. Check console for details.");
-        }
-      });
-
-      const params = new URLSearchParams({
-        mode: 'save',
-        id,
-        supplier,
-        brand,
-        type,
-        size,
-        supplierType,
-        inwardType
-      });
-
-      fetch(`${SHEET_URL}?${params.toString()}`)
-        .then(res => res.text())
-        .then(data => {
-          console.log("✅ Server Response:", data);
-          alert("✅ Data saved and QR generated!");
-        })
-        .catch(err => {
-          console.error("❌ Failed to send data to sheet:", err);
-          alert("❌ Failed to save data. Check your connection or script.");
-        });
+  const canvas = document.getElementById('productionQR');
+  QRCode.toCanvas(canvas, id, { width: 256, margin: 2 }, function (error) {
+    canvas.dataset.id = id;
+    if (error) {
+      console.error("❌ QR Code generation failed:", error);
+      alert("QR generation failed. Check console for details.");
     }
-    
- function printProductionLabel() {
-  const canvas = document.getElementById("productionQR");
-  if (!canvas) return alert("❌ QR code not found!");
+  });
 
-  const qrDataUrl = canvas.toDataURL("image/png");
+  const params = new URLSearchParams({
+    mode: 'save',
+    id,
+    supplier,
+    brand,
+    type,
+    size,
+    supplierType,
+    inwardType,
+    qyt  // ✅ Added here
+  });
 
-  const supplier = document.getElementById("supplier").value.trim();
-  const brand = document.getElementById("brand").value.trim();
-  const type = document.getElementById("type").value.trim();
-  const size = document.getElementById("size").value.trim();
-  const supplierType = document.getElementById("supplierType").value.trim();
-  const inwardType = document.getElementById("inwardType").value.trim();
-  const time = new Date().toLocaleTimeString();
-  const lot = `${supplier.substring(0, 2).toUpperCase()}${brand.substring(0, 2).toUpperCase()}${type.toUpperCase()}${supplierType.substring(0, 2).toUpperCase()}${inwardType.substring(0, 2).toUpperCase()}${new Date().getTime().toString().slice(-6)}`;
-
-  const html = `
-    <html>
-    <head>
-      <style>
-        @media print {
-          body {
-            margin: 0;
-            padding: 0;
-          }
-        }
-        body {
-          font-family: Arial, sans-serif;
-          width: 180mm;
-          height: 30mm;
-          padding: 2mm 4mm;
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          font-size: 10pt;
-        }
-        .qrcode {
-          width: 60px;
-          height: 60px;
-        }
-        .text {
-          flex-grow: 1;
-          padding: 0 10px;
-        }
-        .text div {
-          margin-bottom: 2px;
-        }
-      </style>
-    </head>
-    <body>
-      <img class="qrcode" src="${qrDataUrl}" />
-      <div class="text">
-        <div><strong>Lot:</strong> ${lot}</div>
-        <div><strong>MO:</strong> 002 &nbsp; <strong>P.Code:</strong> ${type}${size}</div>
-        <div>${supplier} | ${brand} | ${inwardType}</div>
-        <div><strong>Time:</strong> ${time}</div>
-      </div>
-      <img class="qrcode" src="${qrDataUrl}" />
-      <script>
-        window.onload = () => {
-          window.print();
-          setTimeout(() => window.close(), 200);
-        };
-      <\/script>
-    </body>
-    </html>
-  `;
-
-  const printWindow = window.open("", "_blank");
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
+  fetch(`${SHEET_URL}?${params.toString()}`)
+    .then(res => res.text())
+    .then(data => {
+      console.log("✅ Server Response:", data);
+      alert("✅ Data saved and QR generated!");
+    })
+    .catch(err => {
+      console.error("❌ Failed to send data to sheet:", err);
+      alert("❌ Failed to save data. Check your connection or script.");
+    });
 }
 
+ function printProductionLabel() {
+      const canvas = document.getElementById("productionQR");
+      if (!canvas) return alert("❌ QR code not found!");
+
+      const qrDataUrl = canvas.toDataURL("image/png");
+
+      const supplier = document.getElementById("supplier").value.trim();
+      const brand = document.getElementById("brand").value.trim();
+      const type = document.getElementById("type").value.trim();
+      const size = document.getElementById("size").value.trim();
+      const supplierType = document.getElementById("supplierType").value.trim();
+      const inwardType = document.getElementById("inwardType").value.trim();
+      const time = new Date().toLocaleTimeString();
+      const lot = `${supplier.substring(0, 2).toUpperCase()}${brand.substring(0, 2).toUpperCase()}${type.toUpperCase()}${supplierType.substring(0, 2).toUpperCase()}${inwardType.substring(0, 2).toUpperCase()}${new Date().getTime().toString().slice(-6)}`;
+
+      const html = `
+        <style>
+          @media print {
+            body {
+              margin: 0;
+              padding: 0;
+            }
+          }
+          body {
+            width: 180mm;
+            height: 30mm;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+          }
+          .label {
+            width: 180mm;
+            height: 30mm;
+            box-sizing: border-box;
+            padding: 2mm 4mm;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          .qrcode {
+            width: 28mm;
+            height: 28mm;
+          }
+          .label-info {
+            flex: 1;
+            padding: 0 8mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+          }
+          .label-info div {
+            margin: 2px 0;
+          }
+        </style>
+        <div class="label">
+            <img class="qrcode" src="${qrDataUrl}" />
+            <div class="label-info">
+              <div><strong>Lot:</strong> ${lot}</div>
+              <div><strong>MO:</strong> 002 &nbsp; <strong>P.Code:</strong> ${type}${size}</div>
+              <div>${supplier} | ${brand} | ${inwardType}</div>
+              <div><strong>Time:</strong> ${time}</div>
+            </div>
+            <img class="qrcode" src="${qrDataUrl}" />
+        </div>
+      `;
+
+      const labelDiv = document.getElementById("print-label");
+      labelDiv.innerHTML = html;
+      labelDiv.style.display = "block";
+
+      setTimeout(() => {
+        window.print();
+        setTimeout(() => {
+          labelDiv.innerHTML = "";
+          labelDiv.style.display = "none";
+        }, 500);
+      }, 200);
+    }
     function generateRackQR() {
       const data = {
         Place: document.getElementById('place').value,
@@ -348,7 +358,46 @@ window.onload = () => {
         if (error) console.error(error);
       });
     }
+function fetchQty() {
+    const qrId = document.getElementById("qrIdInput").value.trim();
+    if (!qrId) {
+      alert("Please enter a QR ID.");
+      return;
+    }
 
+    fetch(`https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?mode=stockQty&id=${qrId}`)
+      .then(res => res.text())
+      .then(qty => {
+        if (qty.startsWith("❌")) {
+          document.getElementById("dispatchStatus").innerText = qty;
+          document.getElementById("qtyInfo").style.display = "none";
+        } else {
+          document.getElementById("availableQty").innerText = qty;
+          document.getElementById("qtyInfo").style.display = "block";
+        }
+      });
+  }
+
+  function submitOutward() {
+    const qrId = document.getElementById("qrIdInput").value.trim();
+    const outQty = document.getElementById("dispatchQty").value.trim();
+    if (!qrId || !outQty || outQty <= 0) {
+      alert("Enter valid dispatch qty.");
+      return;
+    }
+
+    fetch(`https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?mode=outward&id=${qrId}&qyt=${outQty}`)
+      .then(res => res.text())
+      .then(response => {
+        document.getElementById("dispatchStatus").innerText = response;
+        if (response.includes("✅")) {
+          document.getElementById("availableQty").innerText = parseInt(document.getElementById("availableQty").innerText) - outQty;
+          document.getElementById("dispatchQty").value = "";
+        }
+      });
+  }
+
+  
   </script>
   <style>
     body {
@@ -503,6 +552,11 @@ window.onload = () => {
       <option value="" disabled selected hidden>Loading...</option>
     </select>
   </label>
+  <label>Quantity (Qyt):
+  <input type="number" id="qyt" placeholder="Enter quantity" min="1" required />
+</label>
+
+
   <button onclick="generateProductionQR()">Generate Production QR</button>
   <canvas id="productionQR"></canvas>
  <div class="btn-pair">
@@ -519,17 +573,45 @@ window.onload = () => {
     <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
   </div>
   <p><small>Scan 2 QR codes in any order. One for Production ID, one for Rack (JSON).</small></p>
+
+  <div style="margin-top: 10px;">
+  <strong>Production QR ID:</strong>
+  <div id="scanned-production-id" style="margin-bottom: 10px; color: green;"></div>
+
+  <strong>Rack Details:</strong>
+  <div id="scanned-rack-data" style="color: blue;"></div>
+</div>
+
 </div>
 <div class="container" id="outward-section">
   <h2>Outward Processing (Scan Production QR)</h2>
+
+  <!-- QR Scanner -->
   <div id="qr-reader-outward" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;"></div>
+
+  <!-- Form after scan -->
+  <div id="outward-form" style="display: none; text-align: center; margin-top: 20px;">
+    <label for="scannedId"><strong>Scanned QR ID:</strong></label><br>
+    <input type="text" id="scannedId" readonly style="width: 80%; padding: 8px; margin-top: 5px;" />
+
+    <br><br>
+    <label for="dispatchQty"><strong>Dispatch Qty:</strong></label><br>
+    <input type="number" id="dispatchQty" min="1" required style="width: 80%; padding: 8px;" placeholder="Enter quantity to dispatch" />
+
+    <br><br>
+    <button onclick="submitOutward()">✅ Submit Dispatch</button>
+  </div>
+
   <div style="text-align:center; margin-top: 10px;">
     <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
   </div>
-  <p><small>Scan the Production QR code to remove from stock and save in Outward.</small></p>
+
+  <p><small>Scan the Production QR code to remove from stock and log it into Outward.</small></p>
 </div>
 
-<div id="label-print-area" style="display:none;"></div>
+
+
+<div id="print-label" style="display:none;"></div>
 
 
 </body>
