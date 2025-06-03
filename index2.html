@@ -77,29 +77,29 @@
 
   // Show the outward form and prefill scanned ID
   document.getElementById("scannedId").value = productionID;
-  document.getElementById("dispatchQty").value = "";
+  document.getElementById("dispatchqyt").value = "";
   document.getElementById("outward-form").style.display = "block";
 
-  // Fetch available qty
-  fetch(`${SHEET_URL}?mode=stockQty&id=${encodeURIComponent(productionID)}`)
+  // Fetch available qyt
+  fetch(`${SHEET_URL}?mode=stockqyt&id=${encodeURIComponent(productionID)}`)
     .then(res => res.text())
-    .then(qty => {
-      if (qty.startsWith("❌")) {
-        alert(qty);
+    .then(qyt => {
+      if (qyt.startsWith("❌")) {
+        alert(qyt);
       } else {
-        document.getElementById("availableQty")?.remove(); // remove old info
+        document.getElementById("availableqyt")?.remove(); // remove old info
 
         const info = document.createElement("div");
-        info.id = "availableQty";
+        info.id = "availableqyt";
         info.style.marginTop = "10px";
         info.style.color = "green";
-        info.innerHTML = `<strong>Available Qty:</strong> ${qty}`;
+        info.innerHTML = `<strong>Available qyt:</strong> ${qyt}`;
         document.getElementById("outward-form").appendChild(info);
       }
     })
     .catch(err => {
-      console.error("❌ Error fetching qty:", err);
-      alert("❌ Failed to fetch stock qty.");
+      console.error("❌ Error fetching qyt:", err);
+      alert("❌ Failed to fetch stock qyt.");
     });
 }
 
@@ -236,9 +236,9 @@ function generateProductionQR() {
   const size = document.getElementById('size').value.trim();
   const supplierType = document.getElementById('supplierType').value.trim();
   const inwardType = document.getElementById('inwardType').value.trim();
-  const qty = document.getElementById('qty').value.trim();  // ✅ Added
+  const qyt = document.getElementById('qyt').value.trim();  // ✅ Added
 
-  if (!supplier || !brand || !type || !size || !supplierType || !inwardType || !qty) {
+  if (!supplier || !brand || !type || !size || !supplierType || !inwardType || !qyt) {
     alert("⚠️ Please fill all fields including Quantity before generating QR.");
     return;
   }
@@ -276,7 +276,7 @@ function generateProductionQR() {
     size,
     supplierType,
     inwardType,
-    qty  // ✅ Added here
+    qyt  // ✅ Added here
   });
 
   fetch(`${SHEET_URL}?${params.toString()}`)
@@ -384,48 +384,48 @@ function generateProductionQR() {
         if (error) console.error(error);
       });
     }
-function fetchQty() {
+function fetchqyt() {
     const qrId = document.getElementById("qrIdInput").value.trim();
     if (!qrId) {
       alert("Please enter a QR ID.");
       return;
     }
 
-    fetch(`https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?mode=stockQty&id=${qrId}`)
+    fetch(`https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?mode=stockqyt&id=${qrId}`)
       .then(res => res.text())
-      .then(qty => {
-        if (qty.startsWith("❌")) {
-          document.getElementById("dispatchStatus").innerText = qty;
-          document.getElementById("qtyInfo").style.display = "none";
+      .then(qyt => {
+        if (qyt.startsWith("❌")) {
+          document.getElementById("dispatchStatus").innerText = qyt;
+          document.getElementById("qytInfo").style.display = "none";
         } else {
-          document.getElementById("availableQty").innerText = qty;
-          document.getElementById("qtyInfo").style.display = "block";
+          document.getElementById("availableqyt").innerText = qyt;
+          document.getElementById("qytInfo").style.display = "block";
         }
       });
   }
 
 function submitOutward() {
   const id = document.getElementById("scannedId").value.trim();
-  const qty = parseInt(document.getElementById("dispatchQty").value.trim(), 10);
+  const qyt = parseInt(document.getElementById("dispatchqyt").value.trim(), 10);
 
   if (!id) {
     alert("❌ QR ID not found.");
     return;
   }
 
-  if (isNaN(qty) || qty <= 0) {
+  if (isNaN(qyt) || qyt <= 0) {
     alert("❌ Please enter a valid dispatch quantity.");
     return;
   }
 
-  const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qyt=${qty}`;  // ✅ 'qyt' not 'qty'
+  const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qyt=${qyt}`;  // ✅ 'qyt' not 'qyt'
 
   fetch(url)
     .then(response => response.text())
     .then(data => {
       alert(data);  // Will show success or error from Apps Script
       document.getElementById("scannedId").value = "";
-      document.getElementById("dispatchQty").value = "";
+      document.getElementById("dispatchqyt").value = "";
       document.getElementById("outward-form").style.display = "none";
       document.getElementById("qr-reader-outward").innerHTML = "<p style='text-align:center;'>✅ Dispatch complete</p>";
     })
@@ -592,8 +592,8 @@ function submitOutward() {
       <option value="" disabled selected hidden>Loading...</option>
     </select>
   </label>
-  <label>Quantity (qty):
-  <input type="number" id="qty" placeholder="Enter quantity" min="1" required />
+  <label>Quantity (qyt):
+  <input type="number" id="qyt" placeholder="Enter quantity" min="1" required />
 </label>
 
 
@@ -636,8 +636,8 @@ function submitOutward() {
 <input type="text" id="scannedId" readonly style="width: 80%; padding: 8px;" />
 
 <br><br>
-<label for="dispatchQty"><strong>Dispatch Qty:</strong></label><br>
-<input type="number" id="dispatchQty" min="1" required style="width: 80%; padding: 8px;" placeholder="Enter quantity to dispatch" />
+<label for="dispatchqyt"><strong>Dispatch qyt:</strong></label><br>
+<input type="number" id="dispatchqyt" min="1" required style="width: 80%; padding: 8px;" placeholder="Enter quantity to dispatch" />
 
 <br><br>
 <button onclick="submitOutward()">✅ Submit Dispatch</button>
