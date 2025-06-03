@@ -408,25 +408,33 @@ function submitOutward() {
   const id = document.getElementById("scannedId").value.trim();
   const qty = parseInt(document.getElementById("dispatchQty").value.trim(), 10);
 
-  if (!id) return alert("❌ QR ID missing.");
-  if (isNaN(qty) || qty <= 0) return alert("❌ Invalid quantity.");
+  if (!id) {
+    alert("❌ QR ID not found.");
+    return;
+  }
 
-  const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qty=${qty}`;
+  if (isNaN(qty) || qty <= 0) {
+    alert("❌ Please enter a valid dispatch quantity.");
+    return;
+  }
+
+  const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qyt=${qty}`;  // ✅ 'qyt' not 'qty'
 
   fetch(url)
-    .then(res => res.text())
-    .then(response => {
-      alert(response);
+    .then(response => response.text())
+    .then(data => {
+      alert(data);  // Will show success or error from Apps Script
       document.getElementById("scannedId").value = "";
       document.getElementById("dispatchQty").value = "";
       document.getElementById("outward-form").style.display = "none";
-      document.getElementById("availableQty")?.remove();
+      document.getElementById("qr-reader-outward").innerHTML = "<p style='text-align:center;'>✅ Dispatch complete</p>";
     })
     .catch(err => {
-      console.error("❌ Error:", err);
-      alert("❌ Failed to process outward.");
+      console.error("❌ Error submitting outward data:", err);
+      alert("❌ Failed to submit outward data.");
     });
 }
+
 
 
   
