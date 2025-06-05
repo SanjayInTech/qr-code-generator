@@ -13,31 +13,34 @@
     let html5QrCodeInstance = null;
 
     function handleQRScanInput(value) {
-      if (!value) return;
+  if (!value) return;
 
-      if (document.getElementById("outward-section")?.style.display === "block") {
-        processOutward(value.trim());
-        return;
-      }
+  const outwardVisible = document.getElementById("outward-section")?.style.display === "block";
 
-            try {
-        const parsed = JSON.parse(value);
-        scannedRackData = parsed;
-        document.getElementById("scanned-rack-data").textContent = JSON.stringify(parsed, null, 2);
-        console.log("📦 Rack QR Scanned:", parsed);
-      } catch (e) {
-        scannedProductionID = value.trim();
-        document.getElementById("scanned-production-id").textContent = scannedProductionID;
-        console.log("🏷️ Production QR Scanned:", scannedProductionID);
-      }
+  try {
+    const parsed = JSON.parse(value);
+    scannedRackData = parsed;
+    document.getElementById("scanned-rack-data").textContent = JSON.stringify(parsed, null, 2);
+    console.log("📦 Rack QR Scanned:", parsed);
+  } catch (e) {
+    scannedProductionID = value.trim();
+    document.getElementById("scanned-production-id").textContent = scannedProductionID;
+    console.log("🏷️ Production QR Scanned:", scannedProductionID);
 
-
-      if (scannedProductionID && scannedRackData) {
-        processInward(scannedProductionID, scannedRackData);
-        scannedProductionID = null;
-        scannedRackData = null;
-      }
+    if (outwardVisible) {
+      // 👇 process outward ONLY here (for production QR only)
+      processOutward(scannedProductionID);
+      return;
     }
+  }
+
+  if (scannedProductionID && scannedRackData) {
+    processInward(scannedProductionID, scannedRackData);
+    scannedProductionID = null;
+    scannedRackData = null;
+  }
+}
+
    
     function processInward(productionID, rackData) {
       fetch(`${SHEET_URL}?mode=inward&id=${encodeURIComponent(productionID)}`)
@@ -64,16 +67,66 @@
         });
     }
 
-   function processOutward(productionID) {
-  // Stop the QR scanner
-  if (html5QrCodeInstance) {
-    html5QrCodeInstance.stop()
-      .then(() => {
-        console.log("🛑 QR Scanner stopped after scan.");
-        document.getElementById("qr-reader-outward").innerHTML = "<p style='text-align:center;'>✅ QR Scan complete. Awaiting dispatch quantity...</p>";
-      })
-      .catch(err => console.error("❌ Error stopping scanner:", err));
+   function handleQRScanInput(value) {
+  if (!value) return;
+
+  const outwardVisible = document.getElementById("outward-section")?.style.display === "block";
+
+  try {
+    const parsed = JSON.parse(value);
+    scannedRackData = parsed;
+    document.getElementById("scanned-rack-data").textContent = JSON.stringify(parsed, null, 2);
+    console.log("📦 Rack QR Scanned:", parsed);
+  } catch (e) {
+    scannedProductionID = value.trim();
+    document.getElementById("scanned-production-id").textContent = scannedProductionID;
+    console.log("🏷️ Production QR Scanned:", scannedProductionID);
+
+    if (outwardVisible) {
+      // 👇 process outward ONLY here (for production QR only)
+      processOutward(scannedProductionID);
+      return;
+    }
   }
+
+  if (scannedProductionID && scannedRackData) {
+    processInward(scannedProductionID, scannedRackData);
+    scannedProductionID = null;
+    scannedRackData = null;
+  }
+}
+
+function processOutward(productionID) {
+  if (html5QrCodeInstance) {
+    html5QrCodeInstance.stop().then(() => {
+      console.log("🛑 Scanner stopped for outward.");
+      document.getElementById("qr-reader-outward").innerHTML =
+        "<p style='text-align:center;'>✅ QR Scan complete. Awaiting quantity input...</p>";
+    }).catch(console.error);
+  }
+
+  document.getElementById("scannedId").value = productionID;
+  document.getElementById("dispatchqyt").value = "";
+  document.getElementById("outward-form").style.display = "block";
+
+  fetch(`${SHEET_URL}?mode=stockqyt&id=${encodeURIComponent(productionID)}`)
+    .then(res => res.text())
+    .then(qyt => {
+      const info = document.createElement("div");
+      info.id = "availableqyt";
+      info.style.marginTop = "10px";
+      info.style.color = "green";
+      info.innerHTML = `<strong>Available Qty:</strong> ${qyt}`;
+      document.getElementById("outward-form").appendChild(info);
+    })
+    .catch(err => {
+      console.error("❌ Failed to fetch qty:", err);
+      alert("❌ Failed to fetch available stock quantity.");
+    });
+}
+
+
+
 
   // Show the outward form and prefill scanned ID
   document.getElementById("scannedId").value = productionID;
@@ -101,7 +154,7 @@
       console.error("❌ Error fetching qyt:", err);
       alert("❌ Failed to fetch stock qyt.");
     });
-}
+
 
     function printQR(canvasId) {
   const canvas = document.getElementById(canvasId);
@@ -408,32 +461,27 @@ function submitOutward() {
   const id = document.getElementById("scannedId").value.trim();
   const qyt = parseInt(document.getElementById("dispatchqyt").value.trim(), 10);
 
-  if (!id) {
-    alert("❌ QR ID not found.");
+  if (!id || isNaN(qyt) || qyt <= 0) {
+    alert("❌ Invalid input. Please check QR ID and quantity.");
     return;
   }
 
-  if (isNaN(qyt) || qyt <= 0) {
-    alert("❌ Please enter a valid dispatch quantity.");
-    return;
-  }
-
-  const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qyt=${qyt}`;  // ✅ 'qyt' not 'qyt'
-
-  fetch(url)
-    .then(response => response.text())
+  fetch(`${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qyt=${qyt}`)
+    .then(res => res.text())
     .then(data => {
-      alert(data);  // Will show success or error from Apps Script
+      alert(data);
+      document.getElementById("outward-form").style.display = "none";
+      document.getElementById("qr-reader-outward").innerHTML =
+        "<p style='text-align:center;'>✅ Dispatch completed.</p>";
       document.getElementById("scannedId").value = "";
       document.getElementById("dispatchqyt").value = "";
-      document.getElementById("outward-form").style.display = "none";
-      document.getElementById("qr-reader-outward").innerHTML = "<p style='text-align:center;'>✅ Dispatch complete</p>";
     })
     .catch(err => {
-      console.error("❌ Error submitting outward data:", err);
-      alert("❌ Failed to submit outward data.");
+      console.error("❌ Outward submission error:", err);
+      alert("❌ Failed to submit dispatch.");
     });
 }
+
 
 
 
