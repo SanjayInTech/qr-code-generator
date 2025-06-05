@@ -6,7 +6,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script>
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbxkiNHk_2o4O3Otfr2NMmoCdPQdrzEzJFo4v9ioAsDFMN951hf8Spjl-Hjap5YsuhBntQ/exec";
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbwNxI6btSABZdeNndjpi_C78Gi9y_8x5RKRixrQl5mOrIUclkaITB7FFwKQ66O_p56Mgw/exec";
 
     let scannedProductionID = null;
     let scannedRackData = null;
@@ -64,16 +64,18 @@
         });
     }
 
-   function processOutward(productionID) {
-  // Stop the QR scanner
+ function processOutward(productionID) {
+  // Stop scanner after scan
   if (html5QrCodeInstance) {
     html5QrCodeInstance.stop()
       .then(() => {
-        console.log("🛑 QR Scanner stopped after scan.");
-        document.getElementById("qr-reader-outward").innerHTML = "<p style='text-align:center;'>✅ QR Scan complete. Awaiting dispatch quantity...</p>";
+        console.log("🛑 Scanner stopped.");
+        document.getElementById("qr-reader-outward").innerHTML = "<p style='text-align:center;'>✅ QR Scanned. Awaiting dispatch quantity...</p>";
       })
       .catch(err => console.error("❌ Error stopping scanner:", err));
   }
+
+
 
   // Show the outward form and prefill scanned ID
   document.getElementById("scannedId").value = productionID;
@@ -101,8 +103,8 @@
       console.error("❌ Error fetching qyt:", err);
       alert("❌ Failed to fetch stock qyt.");
     });
-}
-
+  }
+  
     function printQR(canvasId) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return alert("❌ QR code not found!");
@@ -418,7 +420,8 @@ function submitOutward() {
     return;
   }
 
-  const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qyt=${qyt}`;  // ✅ 'qyt' not 'qyt'
+ const url = `${SHEET_URL}?mode=outward&id=${encodeURIComponent(id)}&qyt=${qyt}`;
+  // ✅ 'qyt' not 'qyt'
 
   fetch(url)
     .then(response => response.text())
@@ -426,6 +429,7 @@ function submitOutward() {
       alert(data);  // Will show success or error from Apps Script
       document.getElementById("scannedId").value = "";
       document.getElementById("dispatchqyt").value = "";
+      document.getElementById("availableqyt").innerText = "";
       document.getElementById("outward-form").style.display = "none";
       document.getElementById("qr-reader-outward").innerHTML = "<p style='text-align:center;'>✅ Dispatch complete</p>";
     })
@@ -435,6 +439,17 @@ function submitOutward() {
     });
 }
 
+function onQRScanCompleteOutward(scannedId) {
+  document.getElementById("scannedId").value = scannedId;
+  document.getElementById("outward-form").style.display = "block";
+
+  // Fetch available qty
+  fetch(`${SHEET_URL}?mode=stockqyt&id=${encodeURIComponent(scannedId)}`)
+    .then(res => res.text())
+    .then(qty => {
+      document.getElementById("availableqyt").innerText = qty.startsWith("❌") ? qty : `${qty} available`;
+    });
+}
 
 
   
@@ -626,30 +641,35 @@ function submitOutward() {
 <div class="container" id="outward-section">
   <h2>Outward Processing (Scan Production QR)</h2>
 
-  <!-- QR Scanner -->
-  <div id="qr-reader-outward" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;"></div>
+  <!-- QR Scanner Area -->
+  <div id="qr-reader-outward" style="width: 100%; max-width: 480px; margin: auto; padding: 20px; background: #fafafa; border: 1px solid #ccc; border-radius: 10px;">
+    <p style="text-align:center;">🎥 Awaiting QR scan...</p>
+  </div>
 
-  <!-- Form after scan -->
+  <!-- Outward Form (appears after scan) -->
   <div id="outward-form" style="display: none; text-align: center; margin-top: 20px;">
-    <!-- These already exist in your code -->
-<label for="scannedId"><strong>Scanned QR ID:</strong></label><br>
-<input type="text" id="scannedId" readonly style="width: 80%; padding: 8px;" />
+    <label for="scannedId"><strong>Scanned QR ID:</strong></label><br>
+    <input type="text" id="scannedId" readonly style="width: 80%; padding: 8px;" />
 
-<br><br>
-<label for="dispatchqyt"><strong>Dispatch qyt:</strong></label><br>
-<input type="number" id="dispatchqyt" min="1" required style="width: 80%; padding: 8px;" placeholder="Enter quantity to dispatch" />
+    <br><br>
+    <label for="availableqyt"><strong>Available Qty:</strong></label><br>
+    <div id="availableqyt" style="padding: 6px; font-weight: bold; color: green;">Loading...</div>
 
-<br><br>
-<button onclick="submitOutward()">✅ Submit Dispatch</button>
+    <br>
+    <label for="dispatchqyt"><strong>Dispatch Qty:</strong></label><br>
+    <input type="number" id="dispatchqyt" min="1" required style="width: 80%; padding: 8px;" placeholder="Enter quantity to dispatch" />
 
+    <br><br>
+    <button onclick="submitOutward()">✅ Submit Dispatch</button>
   </div>
 
   <div style="text-align:center; margin-top: 10px;">
     <button onclick="stopQRScanner()">🛑 Stop Scanner</button>
   </div>
 
-  <p><small>Scan the Production QR code to remove from stock and log it into Outward.</small></p>
+  <p><small>Scan the Production QR code to remove items from stock and record the dispatch.</small></p>
 </div>
+
 
 
 
