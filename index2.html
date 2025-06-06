@@ -6,7 +6,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <script>
-    const SHEET_URL = "https://script.google.com/macros/s/AKfycbx6R0F5t6TtzNvAzHJJMWe_4E-1kzGNWpUBFIFImjkJOczDqZskzfKXthMZNBtgmnQ4NA/exec";
+    const SHEET_URL = "https://script.google.com/macros/s/AKfycbwTD1fi1GOwhflnYm5UKwT26UwGdSGJG_MGAsZkQlrQctiNnxBWfi5FXwRVRZAFaPbt/exec";
 
     let scannedProductionID = null;
     let scannedRackData = null;
@@ -41,17 +41,16 @@
    
 function processInward(productionID, rackData) {
   // Inward fetch
-  fetch(`${SHEET_URL}?mode=inward&id=${encodeURIComponent(productionID)}`, {
-    method: "GET",
-    mode: "cors",
-    headers: {
-      "Content-Type": "application/json"
-    }
-  })
-    .then(res => res.text())
-    .then(inwardRes => {
-      console.log("📥 Inward saved:", inwardRes);
-    });
+  fetch("YOUR_SCRIPT_URL_HERE?mode=fetch", {
+  method: "GET",
+  mode: "cors",
+  headers: {
+    "Content-Type": "application/json"
+  }
+})
+.then(res => res.json())
+.then(data => console.log("✅ Success:", data))
+.catch(err => console.error("❌ Error:", err));
 
   // Stock fetch
   const stockParams = new URLSearchParams({
