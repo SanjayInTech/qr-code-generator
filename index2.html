@@ -41,7 +41,7 @@
    
 function processInward(productionID, rackData) {
   // Inward fetch
-  fetch("YOUR_SCRIPT_URL_HERE?mode=fetch", {
+  fetch("https://script.google.com/macros/s/AKfycbx6R0F5t6TtzNvAzHJJMWe_4E-1kzGNWpUBFIFImjkJOczDqZskzfKXthMZNBtgmnQ4NA/exec?mode=fetch", {
   method: "GET",
   mode: "cors",
   headers: {
@@ -51,6 +51,7 @@ function processInward(productionID, rackData) {
 .then(res => res.json())
 .then(data => console.log("✅ Success:", data))
 .catch(err => console.error("❌ Error:", err));
+
 
   // Stock fetch
   const stockParams = new URLSearchParams({
