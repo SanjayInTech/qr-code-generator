@@ -39,30 +39,45 @@
       }
     }
    
-    function processInward(productionID, rackData) {
-      fetch(`${SHEET_URL}?mode=inward&id=${encodeURIComponent(productionID)}`)
-        .then(res => res.text())
-        .then(inwardRes => {
-          console.log("📥 Inward saved:", inwardRes);
-        });
-
-      const stockParams = new URLSearchParams({
-        mode: 'stock',
-        id: productionID,
-        ...rackData
-      });
-
-      fetch(`${SHEET_URL}?${stockParams.toString()}`)
-        .then(res => res.text())
-        .then(stockRes => {
-          console.log("📦 Stock saved:", stockRes);
-          alert("✅ Inward & Stock data saved!");
-        })
-        .catch(err => {
-          console.error("❌ Error saving stock:", err);
-          alert("❌ Failed to save stock data.");
-        });
+function processInward(productionID, rackData) {
+  // Inward fetch
+  fetch(`${SHEET_URL}?mode=inward&id=${encodeURIComponent(productionID)}`, {
+    method: "GET",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json"
     }
+  })
+    .then(res => res.text())
+    .then(inwardRes => {
+      console.log("📥 Inward saved:", inwardRes);
+    });
+
+  // Stock fetch
+  const stockParams = new URLSearchParams({
+    mode: 'stock',
+    id: productionID,
+    ...rackData
+  });
+
+  fetch(`${SHEET_URL}?${stockParams.toString()}`, {
+    method: "GET",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  })
+    .then(res => res.text())
+    .then(stockRes => {
+      console.log("📦 Stock saved:", stockRes);
+      alert("✅ Inward & Stock data saved!");
+    })
+    .catch(err => {
+      console.error("❌ Error saving stock:", err);
+      alert("❌ Failed to save stock data.");
+    });
+}
+
 
  function processOutward(productionID) {
   // Stop scanner after scan
